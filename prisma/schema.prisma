@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Restaurant (tenant)
+model Restaurant {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  name        String
+  currency    String   @default("EUR")
+  locale      String   @default("de")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menus      Menu[]
+  categories Category[]
+  dishes     Dish[]
+  qrCodes    QrCode[]
+}
+
+// Menu groups dishes together
+model Menu {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String   @default("Speisekarte")
+  isActive     Boolean  @default(true)
+  slug         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  qrCodes    QrCode[]
+
+  @@unique([restaurantId, slug])
+}
+
+// Category (Vorspeise, Hauptgang, Desserts, Getränke...)
+model Category {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dishes     Dish[]
+
+  @@index([restaurantId, sortOrder])
+}
+
+// Dish
+model Dish {
+  id           String   @id @default(cuid())
+  restaurantId String
+  categoryId   String
+  name         String
+  description  String?
+  price        Decimal  @db.Decimal(10, 2)
+  allergens    String[] // EU allergen codes: A-N (14 Hauptallergene)
+  isVisible    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, categoryId, sortOrder])
+}
+
+// QR Code linking to a menu
+model QrCode {
+  id           String   @id @default(cuid())
+  restaurantId String
+  menuId       String
+  label        String   // e.g. "Tisch 1", "Bar", "Terrasse"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menu       Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
