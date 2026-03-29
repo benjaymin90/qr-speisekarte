@@ -2,7 +2,9 @@ import { Resend } from "resend";
 import { db } from "@/lib/db";
 import type { EmailTemplateType } from "@/generated/prisma/client";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 import { renderTemplate } from "@/lib/email-preview";
 
@@ -52,6 +54,18 @@ export async function sendTemplateEmail({
   });
 
   try {
+    if (!resend) {
+      console.log(
+        `[email-stub] RESEND_API_KEY not configured. Would send email to=${recipientEmail} subject="${subject}"`,
+      );
+      console.log(`[email-stub] Body:\n${body}`);
+      await db.emailLog.update({
+        where: { id: log.id },
+        data: { status: "sent", sentAt: new Date() },
+      });
+      return { logId: log.id, resendId: undefined };
+    }
+
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: recipientEmail,
