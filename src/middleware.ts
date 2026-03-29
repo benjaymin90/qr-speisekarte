@@ -9,8 +9,13 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
+  // Only run Clerk middleware on routes that need auth.
+  // The landing page (/) and other public pages are intentionally excluded
+  // so the app works even when Clerk env vars are not set.
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/admin(.*)",
+    "/sign-in(.*)",
+    "/sign-up(.*)",
     "/(api|trpc)(.*)",
   ],
 };
