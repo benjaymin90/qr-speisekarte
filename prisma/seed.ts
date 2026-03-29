@@ -218,6 +218,75 @@ async function main() {
   }
 
   console.log(`Seeded ${qrCodes.length} QR codes`);
+
+  // ─── E-Mail-Vorlagen (BewerbungsBoard) ───
+
+  const emailTemplates = [
+    {
+      id: "seed-tpl-bestaetigung",
+      type: "BESTAETIGUNG" as const,
+      name: "Bewerbungseingang bestätigen",
+      subject: "Ihre Bewerbung als {{stelle}} — Eingangsbestätigung",
+      body: `<p>Sehr geehrte/r {{vorname}} {{nachname}},</p>
+<p>vielen Dank für Ihre Bewerbung als <strong>{{stelle}}</strong> bei uns.</p>
+<p>Wir haben Ihre Unterlagen erhalten und werden diese sorgfältig prüfen. Sie hören in Kürze von uns.</p>
+<p>Mit freundlichen Grüßen<br>Ihr HR-Team</p>`,
+      isDefault: true,
+    },
+    {
+      id: "seed-tpl-einladung",
+      type: "EINLADUNG" as const,
+      name: "Interview-Einladung Standard",
+      subject: "Einladung zum Vorstellungsgespräch — {{stelle}}",
+      body: `<p>Sehr geehrte/r {{vorname}} {{nachname}},</p>
+<p>wir freuen uns, Sie zu einem Vorstellungsgespräch für die Position <strong>{{stelle}}</strong> einzuladen.</p>
+<p>Bitte teilen Sie uns Ihre Verfügbarkeit mit, damit wir einen Termin vereinbaren können.</p>
+<p>Mit freundlichen Grüßen<br>Ihr HR-Team</p>`,
+      isDefault: true,
+    },
+    {
+      id: "seed-tpl-absage",
+      type: "ABSAGE" as const,
+      name: "Absage Standard",
+      subject: "Ihre Bewerbung als {{stelle}}",
+      body: `<p>Sehr geehrte/r {{vorname}} {{nachname}},</p>
+<p>vielen Dank für Ihr Interesse an der Position <strong>{{stelle}}</strong> und die Zeit, die Sie in Ihre Bewerbung investiert haben.</p>
+<p>Nach sorgfältiger Prüfung müssen wir Ihnen leider mitteilen, dass wir uns für andere Kandidaten entschieden haben.</p>
+<p>Wir wünschen Ihnen für Ihre berufliche Zukunft alles Gute.</p>
+<p>Mit freundlichen Grüßen<br>Ihr HR-Team</p>`,
+      isDefault: true,
+    },
+    {
+      id: "seed-tpl-angebot",
+      type: "ANGEBOT" as const,
+      name: "Jobangebot",
+      subject: "Jobangebot: {{stelle}}",
+      body: `<p>Sehr geehrte/r {{vorname}} {{nachname}},</p>
+<p>wir freuen uns, Ihnen ein Angebot für die Position <strong>{{stelle}}</strong> zu unterbreiten!</p>
+<p>Bitte melden Sie sich bei uns, um die Details zu besprechen.</p>
+<p>Mit freundlichen Grüßen<br>Ihr HR-Team</p>`,
+      isDefault: true,
+    },
+  ];
+
+  for (const tpl of emailTemplates) {
+    await db.emailTemplate.upsert({
+      where: { id: tpl.id },
+      update: {},
+      create: {
+        id: tpl.id,
+        restaurantId: restaurant.id,
+        type: tpl.type,
+        name: tpl.name,
+        subject: tpl.subject,
+        body: tpl.body,
+        isDefault: tpl.isDefault,
+        isActive: true,
+      },
+    });
+  }
+
+  console.log(`Seeded ${emailTemplates.length} email templates`);
   console.log("Seed complete!");
 
   await db.$disconnect();

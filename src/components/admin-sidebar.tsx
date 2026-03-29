@@ -20,6 +20,10 @@ import {
   QrCode,
   Settings,
   LayoutDashboard,
+  Mail,
+  Users,
+  Briefcase,
+  Kanban,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +31,12 @@ const navItems = [
   { title: "Speisekarte", href: "/admin/speisekarte", icon: UtensilsCrossed },
   { title: "QR-Codes", href: "/admin/qr-codes", icon: QrCode },
   { title: "Einstellungen", href: "/admin/einstellungen", icon: Settings },
+];
+
+const bewerbungItems = [
+  { title: "Kanban-Board", href: "/admin/bewerbungen", icon: Kanban },
+  { title: "Stellen", href: "/admin/bewerbungen/stellen", icon: Briefcase },
+  { title: "E-Mail-Vorlagen", href: "/admin/bewerbungen/email-vorlagen", icon: Mail },
 ];
 
 export function AdminSidebar({ restaurantName }: { restaurantName: string }) {
@@ -55,6 +65,29 @@ export function AdminSidebar({ restaurantName }: { restaurantName: string }) {
                         ? pathname === "/admin"
                         : pathname.startsWith(item.href)
                     }
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>BewerbungsBoard</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {bewerbungItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href) && (
+                      item.href !== "/admin/bewerbungen" || pathname === "/admin/bewerbungen"
+                    )}
                   >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />

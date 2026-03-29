@@ -17,10 +17,14 @@ model Restaurant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  menus      Menu[]
-  categories Category[]
-  dishes     Dish[]
-  qrCodes    QrCode[]
+  menus          Menu[]
+  categories     Category[]
+  dishes         Dish[]
+  qrCodes        QrCode[]
+  emailTemplates EmailTemplate[]
+  emailLogs      EmailLog[]
+  jobs           Job[]
+  applicants     Applicant[]
 }
 
 // Menu groups dishes together
@@ -104,4 +108,151 @@ model QrCode {
   menu       Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
+}
+
+// ─── BewerbungsBoard: Kern-Modelle ───
+
+enum ApplicationStage {
+  EINGANG
+  SCREENING
+  INTERVIEW
+  ANGEBOT
+  EINGESTELLT
+  ABGELEHNT
+}
+
+enum JobType {
+  VOLLZEIT
+  TEILZEIT
+  MINIJOB
+  AUSBILDUNG
+  PRAKTIKUM
+}
+
+model Job {
+  id           String   @id @default(cuid())
+  restaurantId String
+  title        String
+  description  String?
+  location     String?
+  type         JobType  @default(VOLLZEIT)
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  applicants Applicant[]
+
+  @@index([restaurantId])
+}
+
+model Applicant {
+  id           String           @id @default(cuid())
+  restaurantId String
+  jobId        String
+  firstName    String
+  lastName     String
+  email        String
+  phone        String?
+  stage        ApplicationStage @default(EINGANG)
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  restaurant Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  job        Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  notes      ApplicantNote[]
+  documents  ApplicantDocument[]
+  history    StageHistory[]
+
+  @@index([restaurantId, jobId])
+  @@index([jobId, stage])
+}
+
+model ApplicantNote {
+  id          String   @id @default(cuid())
+  applicantId String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applicant Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@index([applicantId, createdAt])
+}
+
+model ApplicantDocument {
+  id          String   @id @default(cuid())
+  applicantId String
+  name        String
+  url         String
+  mimeType    String?
+  createdAt   DateTime @default(now())
+
+  applicant Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@index([applicantId])
+}
+
+model StageHistory {
+  id          String            @id @default(cuid())
+  applicantId String
+  fromStage   ApplicationStage?
+  toStage     ApplicationStage
+  createdAt   DateTime          @default(now())
+
+  applicant Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@index([applicantId, createdAt])
+}
+
+// ─── BewerbungsBoard: E-Mail & Benachrichtigungen ───
+
+enum EmailTemplateType {
+  BESTAETIGUNG  // Bewerbungseingang bestätigen
+  ABSAGE        // Absage
+  EINLADUNG     // Interview-Einladung
+  STATUS_UPDATE // Allgemeines Status-Update
+  ANGEBOT       // Jobangebot
+}
+
+// Reusable email templates per organization
+model EmailTemplate {
+  id             String            @id @default(cuid())
+  restaurantId   String
+  type           EmailTemplateType
+  name           String            // e.g. "Interview-Einladung Standard"
+  subject        String            // Email subject with {{placeholders}}
+  body           String            // HTML body with {{placeholders}}
+  isDefault      Boolean           @default(false)
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  emailLogs  EmailLog[]
+
+  @@index([restaurantId, type])
+}
+
+// Audit log for sent emails
+model EmailLog {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  templateId     String?
+  recipientEmail String
+  recipientName  String?
+  subject        String
+  body           String
+  status         String   @default("pending") // pending, sent, failed
+  resendId       String?  // Resend message ID for tracking
+  errorMessage   String?
+  sentAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  restaurant Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  template   EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([templateId])
 }
