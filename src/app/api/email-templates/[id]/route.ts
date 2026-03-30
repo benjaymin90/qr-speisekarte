@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { verifySession } from "@/lib/session";
 import { db } from "@/lib/db";
 
 async function getRestaurantId() {
-  const { userId } = await auth();
-  if (!userId) return null;
-  const restaurant = await db.restaurant.findUnique({
-    where: { clerkUserId: userId },
-    select: { id: true },
-  });
+  const isAuth = await verifySession();
+  if (!isAuth) return null;
+  const restaurant = await db.restaurant.findFirst({ select: { id: true } });
   return restaurant?.id ?? null;
 }
 

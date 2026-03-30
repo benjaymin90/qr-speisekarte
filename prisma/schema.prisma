@@ -10,7 +10,7 @@ datasource db {
 // Restaurant (tenant)
 model Restaurant {
   id          String   @id @default(cuid())
-  clerkUserId String   @unique
+  clerkUserId String?  @unique
   name        String
   currency    String   @default("EUR")
   locale      String   @default("de")

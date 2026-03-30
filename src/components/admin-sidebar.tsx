@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import {
   Sidebar,
   SidebarContent,
@@ -102,15 +101,16 @@ export function AdminSidebar({ restaurantName }: { restaurantName: string }) {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border p-4">
-        <div className="flex items-center gap-3">
-          <UserButton
-            appearance={{
-              elements: { avatarBox: "h-8 w-8" },
-            }}
-          />
-          <span className="text-sm text-muted-foreground truncate">
-            {restaurantName}
-          </span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground truncate">{restaurantName}</span>
+          <form action="/api/auth/sign-out" method="POST">
+            <button
+              type="submit"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Abmelden
+            </button>
+          </form>
         </div>
       </SidebarFooter>
     </Sidebar>
